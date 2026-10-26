@@ -1,1 +1,0 @@
- -jar /workspace/target/bin/tds_middleware.jar -o /workspace/target/bin/tds_middleware --no-fallback --enable-native-access=ALL-UNNAMED
