@@ -1,7 +1,7 @@
 name: Compile Edge Middleware (ARM64)
 
 on:
-  workflow_dispatch: # Allows you to manually trigger the build from the GitHub UI
+  workflow_dispatch: 
 
 jobs:
   build:
@@ -13,17 +13,21 @@ jobs:
       - name: Set up QEMU for ARM64 Emulation
         uses: docker/setup-qemu-action@v3
 
-      - name: Compile Native Image
+      - name: Compile Native Image (GraalVM ARM64)
         run: |
-          # We use the official Ballerina image to run the build natively in the container
+          # Use Oracle's official ARM64 GraalVM Ubuntu image and inject Ballerina
           docker run --rm --platform linux/arm64 \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
-            ballerina/ballerina:nightly \
-            bal build --graalvm
+            ghcr.io/graalvm/native-image-community:17-ubuntu \
+            bash -c "apt-get update && apt-get install -y curl build-essential zlib1g-dev && \
+                     curl -L -o bal.deb https://dist.ballerina.io/downloads/2201.8.0/ballerina-2201.8.0-swan-lake-linux-arm64.deb && \
+                     dpkg -i bal.deb && \
+                     export GRAALVM_HOME=\$JAVA_HOME && \
+                     bal build --graalvm"
             
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
           name: tds-middleware-orange-pi
-          path: target/bin/ # This is where the compiled binary will be saved
+          path: target/bin/
