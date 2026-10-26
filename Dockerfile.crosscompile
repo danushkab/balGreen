@@ -1,0 +1,79 @@
+# syntax=docker/dockerfile:1
+# =============================================================================
+# Dockerfile.crosscompile
+# 
+# Multi-stage / cross-compilation environment targeting ARM64 Linux
+# Specifically configured for Orange Pi Zero 3 (Allwinner H618 / aarch64)
+# =============================================================================
+
+FROM --platform=linux/arm64 ubuntu:22.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Build arguments for versions
+ARG BALLERINA_VERSION=2201.14.1
+ARG GRAALVM_VERSION=21.0.2
+
+# -----------------------------------------------------------------------------
+# 1. Install system dependencies, C toolchain, and native compilation libraries
+# -----------------------------------------------------------------------------
+# GraalVM native image compilation requires:
+# - build-essential (gcc, g++, make, libc6-dev, binutils)
+# - zlib1g-dev (and libz-dev)
+# - essential network & extraction tools (curl, wget, tar, unzip, git, file)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    gcc \
+    g++ \
+    libc6-dev \
+    zlib1g-dev \
+    libz-dev \
+    ca-certificates \
+    curl \
+    wget \
+    tar \
+    unzip \
+    git \
+    file \
+    && rm -rf /var/lib/apt/lists/*
+
+# -----------------------------------------------------------------------------
+# 2. Install GraalVM JDK with Native Image (ARM64 / aarch64)
+# -----------------------------------------------------------------------------
+# Ballerina Swan Lake 2201.11.0+ requires Java 21 GraalVM.
+# GraalVM Community Edition 21+ includes native-image pre-bundled.
+ENV GRAALVM_HOME=/opt/graalvm
+ENV JAVA_HOME=/opt/graalvm
+ENV PATH="${GRAALVM_HOME}/bin:${PATH}"
+
+RUN mkdir -p /opt/graalvm \
+    && echo "Fetching GraalVM JDK ${GRAALVM_VERSION} for Linux aarch64..." \
+    && curl -fsSL "https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-${GRAALVM_VERSION}/graalvm-community-jdk-${GRAALVM_VERSION}_linux-aarch64_bin.tar.gz" \
+       | tar -xz -C /opt/graalvm --strip-components=1 \
+    && "${GRAALVM_HOME}/bin/java" -version \
+    && "${GRAALVM_HOME}/bin/native-image" --version
+
+# -----------------------------------------------------------------------------
+# 3. Install Ballerina Swan Lake Toolchain (ARM64)
+# -----------------------------------------------------------------------------
+# Installs the official Ballerina Swan Lake distribution for Linux ARM64
+RUN echo "Fetching Ballerina ${BALLERINA_VERSION} for Linux ARM64..." \
+    && curl -fsSL -o /tmp/ballerina.deb "https://dist.ballerina.io/downloads/${BALLERINA_VERSION}/ballerina-${BALLERINA_VERSION}-swan-lake-linux-arm-x64.deb" \
+    && (dpkg -i /tmp/ballerina.deb || apt-get install -f -y) \
+    && rm -f /tmp/ballerina.deb \
+    && bal version
+
+# Ensure GraalVM is the primary runtime for native image builds
+ENV GRAALVM_HOME=/opt/graalvm
+ENV JAVA_HOME=/opt/graalvm
+ENV PATH="/usr/bin:${GRAALVM_HOME}/bin:${PATH}"
+
+# -----------------------------------------------------------------------------
+# 4. Workspace setup
+# -----------------------------------------------------------------------------
+WORKDIR /workspace
+
+# Default command compiles the mounted Ballerina package into a native binary
+CMD ["bal", "build", "--graalvm"]
+

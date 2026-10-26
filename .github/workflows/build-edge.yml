@@ -1,0 +1,29 @@
+name: Compile Edge Middleware (ARM64)
+
+on:
+  workflow_dispatch: # Allows you to manually trigger the build from the GitHub UI
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU for ARM64 Emulation
+        uses: docker/setup-qemu-action@v3
+
+      - name: Compile Native Image
+        run: |
+          # We use the official Ballerina image to run the build natively in the container
+          docker run --rm --platform linux/arm64 \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            ballerina/ballerina:nightly \
+            bal build --graalvm
+            
+      - name: Upload Binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: tds-middleware-orange-pi
+          path: target/bin/ # This is where the compiled binary will be saved
