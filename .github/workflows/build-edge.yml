@@ -19,14 +19,15 @@ jobs:
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             ubuntu:22.04 \
-            bash -c 'apt-get update && apt-get install -y curl build-essential zlib1g-dev && \
+            bash -c 'apt-get update && apt-get install -y curl build-essential zlib1g-dev unzip && \
                      curl -L -o graalvm.tar.gz https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-17.0.9/graalvm-community-jdk-17.0.9_linux-aarch64_bin.tar.gz && \
                      tar -xzf graalvm.tar.gz -C /opt && \
                      export GRAALVM_HOME=$(ls -d /opt/graalvm-community-openjdk-17*) && \
                      export JAVA_HOME=$GRAALVM_HOME && \
                      export PATH=$JAVA_HOME/bin:$PATH && \
-                     curl -L -o bal.deb https://dist.ballerina.io/downloads/2201.8.0/ballerina-2201.8.0-swan-lake-linux-arm64.deb && \
-                     dpkg -i bal.deb && \
+                     curl -L -o bal.zip https://dist.ballerina.io/downloads/2201.8.0/ballerina-2201.8.0-swan-lake.zip && \
+                     unzip -q bal.zip -d /opt/ && \
+                     export PATH=/opt/ballerina-2201.8.0-swan-lake/bin:$PATH && \
                      bal build --graalvm'
             
       - name: Upload Binary
