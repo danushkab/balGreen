@@ -5,33 +5,35 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up QEMU for ARM64 Emulation
-        uses: docker/setup-qemu-action@v3
+      - name: Install Dependencies
+        run: sudo apt-get update && sudo apt-get install -y curl build-essential zlib1g-dev unzip
 
-      - name: Compile Native Image (GraalVM ARM64)
+      - name: Setup GraalVM (Java 25)
         run: |
-          docker run --rm --platform linux/arm64 \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            ubuntu:22.04 \
-            bash -c 'apt-get update && apt-get install -y curl build-essential zlib1g-dev unzip && \
-                     curl -L -o graalvm.tar.gz https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-aarch64_bin.tar.gz && \
-                     tar -xzf graalvm.tar.gz -C /opt && \
-                     export GRAALVM_HOME=$(ls -d /opt/graalvm-* | head -n 1) && \
-                     export JAVA_HOME=$GRAALVM_HOME && \
-                     export PATH=$JAVA_HOME/bin:$PATH && \
-                     curl -L -o bal.zip https://github.com/ballerina-platform/ballerina-distribution/releases/download/v2201.14.1/ballerina-2201.14.1-swan-lake-linux-arm.zip && \
-                     mkdir -p /opt/ballerina && \
-                     unzip -q bal.zip -d /opt/ballerina/ && \
-                     export BALLERINA_HOME=$(ls -d /opt/ballerina/* | head -n 1) && \
-                     export PATH=$BALLERINA_HOME/bin:$PATH && \
-                     bal build --graalvm'
-            
+          curl -L -o graalvm.tar.gz https://download.oracle.com/graalvm/25/latest/graalvm-jdk-25_linux-aarch64_bin.tar.gz
+          sudo tar -xzf graalvm.tar.gz -C /opt
+          GRAAL_PATH=$(ls -d /opt/graalvm-* | head -n 1)
+          echo "GRAALVM_HOME=$GRAAL_PATH" >> $GITHUB_ENV
+          echo "JAVA_HOME=$GRAAL_PATH" >> $GITHUB_ENV
+          echo "$GRAAL_PATH/bin" >> $GITHUB_PATH
+
+      - name: Setup Ballerina
+        run: |
+          curl -L -o bal.zip https://github.com/ballerina-platform/ballerina-distribution/releases/download/v2201.14.1/ballerina-2201.14.1-swan-lake-linux-arm.zip
+          sudo mkdir -p /opt/ballerina
+          sudo unzip -q bal.zip -d /opt/ballerina/
+          BAL_PATH=$(ls -d /opt/ballerina/* | head -n 1)
+          echo "BALLERINA_HOME=$BAL_PATH" >> $GITHUB_ENV
+          echo "$BAL_PATH/bin" >> $GITHUB_PATH
+
+      - name: Compile Native Image
+        run: bal build --graalvm
+        
       - name: Upload Binary
         uses: actions/upload-artifact@v4
         with:
