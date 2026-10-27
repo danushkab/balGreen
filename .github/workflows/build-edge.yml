@@ -27,8 +27,9 @@ jobs:
                      export PATH=$JAVA_HOME/bin:$PATH && \
                      curl -L -o bal.zip https://dist.ballerina.io/downloads/2201.14.1/ballerina-2201.14.1-swan-lake.zip && \
                      unzip -q bal.zip -d /opt/ && \
-                     export BALLERINA_HOME=/opt/ballerina-2201.14.1-swan-lake && \
-                     export PATH=$BALLERINA_HOME/bin:$PATH && \
+                     export PATH=/opt/ballerina-2201.14.1-swan-lake/bin:$PATH && \
+                     bal dist pull 2201.14.1 && \
+                     bal dist use 2201.14.1 && \
                      bal build --graalvm'
             
       - name: Upload Binary
