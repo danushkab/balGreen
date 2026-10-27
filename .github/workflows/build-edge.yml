@@ -25,9 +25,10 @@ jobs:
                      export GRAALVM_HOME=$(ls -d /opt/graalvm-community-openjdk-17*) && \
                      export JAVA_HOME=$GRAALVM_HOME && \
                      export PATH=$JAVA_HOME/bin:$PATH && \
-                     curl -L -o bal.zip https://dist.ballerina.io/downloads/2201.8.0/ballerina-2201.8.0-swan-lake.zip && \
+                     curl -L -o bal.zip https://dist.ballerina.io/downloads/2201.14.1/ballerina-2201.14.1-swan-lake.zip && \
                      unzip -q bal.zip -d /opt/ && \
-                     export PATH=/opt/ballerina-2201.8.0-swan-lake/bin:$PATH && \
+                     export BALLERINA_HOME=/opt/ballerina-2201.14.1-swan-lake && \
+                     export PATH=$BALLERINA_HOME/bin:$PATH && \
                      bal build --graalvm'
             
       - name: Upload Binary
