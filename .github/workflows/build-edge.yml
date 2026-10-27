@@ -20,16 +20,16 @@ jobs:
             -w /workspace \
             ubuntu:22.04 \
             bash -c 'apt-get update && apt-get install -y curl build-essential zlib1g-dev unzip && \
-                     curl -L -o graalvm.tar.gz https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-17.0.9/graalvm-community-jdk-17.0.9_linux-aarch64_bin.tar.gz && \
+                     curl -L -o graalvm.tar.gz https://github.com/graalvm/graalvm-ce-builds/releases/download/jdk-21.0.2/graalvm-community-jdk-21.0.2_linux-aarch64_bin.tar.gz && \
                      tar -xzf graalvm.tar.gz -C /opt && \
-                     export GRAALVM_HOME=$(ls -d /opt/graalvm-community-openjdk-17*) && \
+                     export GRAALVM_HOME=$(ls -d /opt/graalvm-community-openjdk-21*) && \
                      export JAVA_HOME=$GRAALVM_HOME && \
                      export PATH=$JAVA_HOME/bin:$PATH && \
-                     curl -L -o bal.zip https://dist.ballerina.io/downloads/2201.8.0/ballerina-2201.8.0-swan-lake.zip && \
-                     unzip -q bal.zip -d /opt/ && \
-                     export PATH=/opt/ballerina-2201.8.0-swan-lake/bin:$PATH && \
-                     bal dist pull 2201.8.0 && \
-                     bal dist use 2201.8.0 && \
+                     curl -L -o bal.zip https://github.com/ballerina-platform/ballerina-distribution/releases/download/v2201.14.1/ballerina-2201.14.1-swan-lake-linux-arm.zip && \
+                     mkdir -p /opt/ballerina && \
+                     unzip -q bal.zip -d /opt/ballerina/ && \
+                     export BALLERINA_HOME=$(ls -d /opt/ballerina/* | head -n 1) && \
+                     export PATH=$BALLERINA_HOME/bin:$PATH && \
                      bal build --graalvm'
             
       - name: Upload Binary
