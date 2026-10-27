@@ -2,3 +2,6 @@
 org = "greenhouse"
 name = "tds_middleware"
 version = "0.1.0"
+
+[build-options]
+graalvmBuildOptions = ["-march=compatibility"]
